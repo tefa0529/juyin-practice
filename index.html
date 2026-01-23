@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注音拼音練習 App</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .container { display: grid; grid-template-columns: 3fr 1fr; gap: 10px; width: 95vw; height: 90vh; margin-top: 10px; }
+        
+        /* 故事區 */
+        .main-area { background: var(--blue); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .story-img { width: 100%; max-height: 250px; object-fit: contain; background: white; border-radius: 10px; }
+        .dialog-box { width: 80%; background: white; margin-top: 20px; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #333; }
+
+        /* 作答區 */
+        .answer-area { background: var(--green); border-radius: 20px; padding: 20px; margin-top: 10px; display: flex; align-items: center; gap: 20px; }
+        .drop-zone { width: 200px; height: 200px; background: #ccc; border: 3px dashed #666; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; }
+        
+        /* 符號區 */
+        .symbol-wall { border-left: 1px solid #ddd; padding: 10px; overflow-y: auto; }
+        .symbol-item { display: inline-block; padding: 8px 12px; margin: 3px; background: white; border: 1px solid #ccc; cursor: grab; border-radius: 5px; }
+        .type-label { font-weight: bold; margin-top: 10px; color: #555; border-bottom: 2px solid #333; }
+        
+        .btn { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+        .btn-ok { background: #fbbf24; }
+        .btn-re { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div v-if="!currentStory" style="padding: 50px;">
+        <h2>選擇故事</h2>
+        <button v-for="s in stories" @click="selectStory(s)" class="btn">{{ s.title }}</button>
+    </div>
+
+    <div v-else class="container">
+        <div>
+            <div class="main-area">
+                <img :src="currentScene.image" class="story-img">
+                <div class="dialog-box">對話框：{{ currentScene.dialogue }}</div>
+            </div>
+
+            <div class="answer-area">
+                <div style="font-size: 2rem;">{{ currentWord.word }} <button @click="playSound">▶️</button></div>
+                <div id="targetZone" class="drop-zone">
+                    <div v-for="s in currentAttempt" class="symbol-item">{{ s }}</div>
+                </div>
+                <div>
+                    <button @click="resetAttempt" class="btn btn-re">RE</button>
+                    <button @click="checkAnswer" class="btn btn-ok">OK</button>
+                </div>
+                <div v-if="isCorrect">⭐</div>
+            </div>
+        </div>
+
+        <div class="symbol-wall">
+            <div class="type-label">聲母</div>
+            <div v-for="s in symbols.initials" class="symbol-item" @click="addToAttempt(s)">{{ s }}</div>
+            <div class="type-label">介/韻母</div>
+            <div v-for="s in symbols.finals" class="symbol-item" @click="addToAttempt(s)">{{ s }}</div>
+            <div class="type-label">音調</div>
+            <div v-for="s in symbols.tones" class="symbol-item" @click="addToAttempt(s)">{{ s }}</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            currentStory: null,
+            currentAttempt: [],
+            isCorrect: false,
+            stories: [{ title: '壽司大餐', id: 1 }], // 預設資料
+            currentScene: { image: 'https://via.placeholder.com/400x250', dialogue: '今天我想吃壽司' },
+            currentWord: { word: '壽', zhuyin: ['ㄕ', 'ㄡ', 'ˋ'] },
+            symbols: {
+                initials: ['ㄅ','ㄆ','ㄇ','ㄈ','ㄉ','ㄊ','ㄋ','ㄌ','ㄍ','ㄎ','ㄏ','ㄐ','ㄑ','ㄒ','ㄓ','ㄔ','ㄕ','ㄖ','ㄗ','ㄘ','ㄙ'],
+                finals: ['ㄚ','ㄛ','ㄜ','ㄝ','ㄞ','ㄟ','ㄠ','ㄡ','ㄢ','ㄣ','ㄤ','ㄥ','ㄦ','ㄧ','ㄨ','ㄩ'],
+                tones: ['ˊ', 'ˇ', 'ˋ', '˙']
+            }
+        }
+    },
+    methods: {
+        selectStory(s) { this.currentStory = s; },
+        addToAttempt(s) { this.currentAttempt.push(s); },
+        resetAttempt() { this.currentAttempt = []; this.isCorrect = false; },
+        checkAnswer() {
+            const answer = this.currentAttempt.join('');
+            const target = this.currentWord.zhuyin.join('');
+            if (answer === target) {
+                this.isCorrect = true;
+                alert('拼對了！太棒了！');
+            } else {
+                alert('再試試看喔！');
+                this.resetAttempt();
+            }
+        },
+        playSound() {
+            // 串接 Google 翻譯 API 快速產生的簡易發音
+            const msg = new SpeechSynthesisUtterance(this.currentWord.word);
+            msg.lang = 'zh-TW';
+            window.speechSynthesis.speak(msg);
+        }
+    },
+    mounted() {
+        // 這裡未來加入 Fetch Google Sheets 的程式碼
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
