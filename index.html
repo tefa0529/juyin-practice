@@ -9,65 +9,83 @@
 <style>
     :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; --dark-green: #166534; --dark-blue: #0369a1; }
     body { font-family: "Microsoft JhengHei", sans-serif; background: #f8fafc; margin: 0; display: flex; flex-direction: column; align-items: center; }
-    #app { width: 100%; max-width: 1000px; padding: 15px; box-sizing: border-box; }
+    #app { width: 100%; max-width: 1100px; padding: 15px; box-sizing: border-box; }
 
-    /* 彈性容器：手機預設垂直，大螢幕水平 */
+    /* --- 核心結構：手機版預設上下排列 --- */
     .container { 
         display: flex; 
         flex-direction: column; 
         gap: 20px; 
         width: 100%;
-        box-sizing: border-box; 
     }
 
-    /* 繪本場景：高度設為 auto 讓它根據寬度自適應，更適合手機 */
+    /* 繪本場景區域 */
     .scene-container { 
-        position: relative; width: 100%; min-height: 300px; background: var(--blue); 
-        border-radius: 25px; padding: 15px; display: flex; flex-direction: column; 
-        align-items: center; box-shadow: 0 8px 16px rgba(0,0,0,0.1); box-sizing: border-box;
+        width: 100%; 
+        background: var(--blue); 
+        border-radius: 20px; 
+        padding: 15px; 
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-    
     .story-img { 
-        width: 100%; max-height: 400px; object-fit: contain; 
-        border-radius: 15px; border: 4px solid white; background: #eee; /* 讀取時的背景色 */
+        width: 100%; 
+        max-height: 300px; /* 限制高度，避免手機畫面被撐太長 */
+        object-fit: contain; 
+        border-radius: 12px; 
+        border: 4px solid white; 
     }
     
-    .dialog-container { width: 100%; background: rgba(255,255,255,0.9); margin-top: 15px; padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 15px; border: 3px solid var(--dark-blue); box-sizing: border-box; }
-    .dialog-text { flex: 1; font-size: 1.1rem; color: #0c4a6e; font-weight: bold; }
-
-    .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 15px; display: flex; align-items: center; justify-content: space-around; min-height: 150px; border: 2px solid var(--dark-green); box-sizing: border-box; }
-    .drop-zone { width: 140px; height: 100px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 2.5rem; font-weight: bold; }
-
-    /* 符號牆：手機上使用彈性排列 */
-    .symbol-wall { 
-        background: white; border-radius: 20px; padding: 15px; border: 1px solid #ddd; 
-        display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 5px;
+    .dialog-container { 
+        width: 100%; background: white; margin-top: 10px; padding: 10px; 
+        border-radius: 15px; display: flex; align-items: center; gap: 10px; 
+        border: 3px solid var(--dark-blue); box-sizing: border-box;
     }
-    .symbol-wall > div { width: 100%; } /* 標題佔滿一行 */
+
+    /* 作答區 */
+    .answer-area { 
+        background: var(--green); border-radius: 20px; padding: 15px; 
+        display: flex; align-items: center; justify-content: space-around; 
+        min-height: 120px; border: 2px solid var(--dark-green); 
+    }
+
+    /* --- 注音符號牆：手機版排在下方，橫向自動換行 --- */
+    .symbol-wall { 
+        background: white; border-radius: 20px; padding: 15px; border: 1px solid #ddd;
+        display: flex;
+        flex-wrap: wrap; /* 讓注音可以橫向排列並換行 */
+        justify-content: center;
+        gap: 5px;
+    }
+    .type-label { width: 100%; font-weight: bold; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; }
     
     .symbol-item { 
         display: inline-flex; align-items: center; justify-content: center;
-        min-width: 45px; height: 45px; margin: 2px; background: #fffbeb; 
-        border: 2px solid #f59e0b; cursor: pointer; border-radius: 10px; 
-        font-size: 1.3rem; transition: 0.1s; user-select: none;
+        width: 45px; height: 45px; /* 固定大小比較好點擊 */
+        background: #fffbeb; border: 2px solid #f59e0b; 
+        border-radius: 10px; font-size: 1.2rem; cursor: pointer;
     }
-    .symbol-item:active { transform: scale(0.9); background: #f59e0b; color: white; }
 
-    /* 針對桌機/平板版面優化 */
+    /* --- 電腦/平板版面：寬度超過 768px 時恢復左右並排 --- */
     @media (min-width: 768px) {
-        .container { display: grid; grid-template-columns: 2.5fr 1fr; }
-        .symbol-wall { display: block; } /* 桌機恢復塊狀 */
-        .dialog-text { font-size: 1.3rem; }
-        .drop-zone { width: 180px; height: 120px; }
+        .container { 
+            display: grid; 
+            grid-template-columns: 2.5fr 1fr; /* 故事區佔大份，符號牆佔右側一小欄 */
+            align-items: start;
+        }
+        .symbol-wall {
+            display: block; /* 恢復成一塊塊堆疊，適合垂直顯示 */
+            position: sticky; /* 滾動時固定在右側 */
+            top: 20px;
+        }
+        .symbol-item { margin: 3px; }
+        .story-img { max-height: 400px; }
     }
 
-    /* 全破獎勵 */
-    .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; padding: 20px; }
-    .big-star { font-size: 8rem; animation: pulse 1s infinite alternate; }
-    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); } }
-    
-    .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
-    .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); }
+    /* 全破畫面 */
+    .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
 </style>
 </head>
 <body>
