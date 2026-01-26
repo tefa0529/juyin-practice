@@ -9,17 +9,23 @@
 <style>
     :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; }
     body { font-family: sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-    #app { width: 100%; max-width: 1100px; }
+    #app { width: 100%; max-width: 1100px; box-sizing: border-box; }
+
+    /* 這是最外層容器 */
+    .container { width: 100%; display: flex; flex-direction: column; gap: 15px; }
 
     /* --- 核心結構：手機版預設上下排列 --- */
-    .container { 
-        display: flex; 
-        flex-direction: column; 
-        gap: 15px; 
+    /* 這是原本被你硬寫死成 Grid 的區塊，現在改為 RWD 控制 */
+    .game-content-wrapper {
+        display: flex;
+        flex-direction: column; /* 手機版：上下堆疊 */
+        gap: 20px;
         width: 100%;
     }
+
     .main-area { width: 100%; box-sizing: border-box; }
-    .story-img { width: 100%; height: auto; border-radius: 15px; border: 4px solid white; }
+    .scene-container { width: 100%; background: var(--blue); border-radius: 20px; padding: 15px; box-sizing: border-box; }
+    .story-img { width: 100%; height: auto; max-height: 300px; object-fit: contain; border-radius: 12px; border: 4px solid white; }
     
     /* 繪本場景區域 */
     .scene-container { 
@@ -55,37 +61,24 @@
 
    /* 注音符號牆：手機版橫向排列 */
     .symbol-wall { 
-        width: 100%; 
-        background: white; 
-        border: 1px solid #ddd; 
-        border-radius: 20px; 
-        padding: 15px; 
-        box-sizing: border-box;
-        display: flex; /* 改為 flex 讓按鈕橫著排 */
-        flex-wrap: wrap; /* 自動換行 */
-        justify-content: center;
-        gap: 8px;
+        width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; 
+        padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; 
+        justify-content: center; gap: 8px;
     }
     .type-label { width: 100%; color: #b45309; border-bottom: 2px solid orange; margin-bottom: 5px; }
     
-    .symbol-item { 
-        width: 45px; height: 45px; /* 手機版按鈕大一點好點擊 */
-        display: flex; align-items: center; justify-content: center;
-        background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px;
-    }
-
+    .symbol-item { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 1.2rem; cursor: pointer; }
     /* --- 電腦版：螢幕寬度大於 768px 時才變更為左右並排 --- */
     @media (min-width: 768px) {
-        .container { 
-            display: grid; 
-            grid-template-columns: 2.5fr 1fr; /* 故事區 2.5 : 符號牆 1 */
+        .game-content-wrapper {
+            display: grid; /* 電腦版：啟動網格並排 */
+            grid-template-columns: 2.5fr 1fr;
             gap: 20px;
         }
-        .symbol-wall { 
+        .symbol-wall {
             display: block; /* 電腦版恢復垂直堆疊 */
-            position: sticky; 
-            top: 20px; 
-            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
         .symbol-item { margin: 4px; }
         .story-img { max-height: 400px; }
@@ -117,7 +110,7 @@
 
     <div v-else>
         <button @click="currentStory = null" class="btn" style="background:#64748b; color:white; margin-bottom:15px; padding:10px 20px; border-radius:10px;">⬅ 回首頁</button>
-        <div style="display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px;">
+        <div class="game-content-wrapper">
             <div>
                 <div class="scene-container">
                     <img :src="currentStory.words[wordIndex].img" class="story-img" :key="wordIndex">
@@ -254,6 +247,7 @@ createApp({
 </script>
 </body>
 </html>
+
 
 
 
