@@ -7,30 +7,46 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; }
-        body { font-family: "Microsoft JhengHei", sans-serif; display: flex; flex-direction: column; align-items: center; background: #f8fafc; margin: 0; }
+        :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; --dark-green: #166534; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f8fafc; margin: 0; display: flex; flex-direction: column; align-items: center; }
         #app { width: 100%; max-width: 1000px; padding: 20px; }
         .container { display: grid; grid-template-columns: 3fr 1.5fr; gap: 20px; margin-top: 10px; }
         
-        /* 故事區 */
         .main-area { background: var(--blue); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 300px; }
         .story-img { width: 100%; max-height: 250px; object-fit: contain; background: white; border-radius: 10px; border: 3px solid white; }
         .dialog-box { width: 90%; background: white; margin-top: 20px; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #333; font-size: 1.2rem; }
 
-        /* 作答區 */
-        .answer-area { background: var(--green); border-radius: 20px; padding: 20px; margin-top: 10px; display: flex; align-items: center; justify-content: space-around; min-height: 150px; }
+        .answer-area { background: var(--green); border-radius: 20px; padding: 20px; margin-top: 10px; display: flex; align-items: center; justify-content: space-around; min-height: 180px; position: relative; }
         .drop-zone { width: 180px; height: 120px; background: #cbd5e1; border: 3px dashed #64748b; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2.5rem; font-weight: bold; color: #1e293b; }
         
-        /* 符號區 */
-        .symbol-wall { background: white; border-radius: 20px; padding: 15px; border: 1px solid #ddd; height: fit-content; }
-        .symbol-item { display: inline-block; padding: 8px 12px; margin: 4px; background: #fef3c7; border: 1px solid #f59e0b; cursor: pointer; border-radius: 8px; font-size: 1.2rem; transition: 0.2s; }
-        .symbol-item:hover { background: #f59e0b; color: white; }
-        .type-label { font-weight: bold; margin-top: 15px; color: #b45309; border-bottom: 2px solid #f59e0b; padding-bottom: 5px; }
+        /* 回饋文字樣式 */
+        .feedback-container { display: flex; flex-direction: column; align-items: center; width: 150px; height: 120px; justify-content: center; }
+        .feedback-text { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+        .text-success { color: #b45309; }
+        .text-error { color: #ef4444; }
+
+        .symbol-wall { background: white; border-radius: 20px; padding: 15px; border: 1px solid #ddd; }
+        .symbol-item { display: inline-block; padding: 8px 12px; margin: 4px; background: #fef3c7; border: 1px solid #f59e0b; cursor: pointer; border-radius: 8px; font-size: 1.2rem; transition: all 0.1s; }
+        .symbol-item:active { transform: scale(0.9); background: #f59e0b; }
+
+        /* 發音按鈕特效 */
+        .btn-audio { 
+            cursor: pointer; background: white; border: 2px solid var(--dark-green); 
+            border-radius: 50%; width: 55px; height: 55px; font-size: 1.5rem;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 0 var(--dark-green);
+        }
+        .btn-audio:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--dark-green);
+            background: var(--green);
+        }
+
+        .btn { padding: 10px 20px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
+        .star { font-size: 3.5rem; color: #fbbf24; transition: all 0.5s; }
+        .star-up { transform: translateY(-15px); }
         
-        .btn { padding: 10px 20px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; font-size: 1rem; }
-        .btn-home { background: #64748b; color: white; margin-bottom: 10px; }
-        .btn-audio { background: white; border: 2px solid #166534; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; }
-        .star { font-size: 3rem; color: #fbbf24; }
+        .type-label { font-weight: bold; margin-top: 15px; color: #b45309; border-bottom: 2px solid #f59e0b; padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -38,14 +54,13 @@
 <div id="app">
     <div v-if="!currentStory" style="padding: 50px; text-align: center;">
         <h1>📖 選擇故事開始練習</h1>
-        <div v-if="stories.length === 0">載入資料中... (請確認 Google Sheet 已發佈到網路)</div>
         <button v-for="s in stories" :key="s.group_id" @click="startStory(s)" class="btn" style="margin: 10px; background: var(--blue); padding: 20px;">
             {{ s.story_title }}
         </button>
     </div>
 
     <div v-else>
-        <button @click="currentStory = null" class="btn btn-home">⬅ 回故事選單</button>
+        <button @click="currentStory = null" class="btn" style="background:#64748b; color:white; margin-bottom:10px;">⬅ 回選單</button>
         <div class="container">
             <div>
                 <div class="main-area">
@@ -63,18 +78,25 @@
                         <span v-for="s in attempt">{{ s }}</span>
                     </div>
 
-                    <div v-if="isSuccess" class="star">⭐</div>
-                    <button v-else @click="resetTurn" class="btn" style="background: #ef4444; color: white;">重拼</button>
+                    <div class="feedback-container">
+                        <div v-if="isSuccess || showError" class="star" :class="{'star-up': isSuccess}">
+                            {{ isSuccess ? '⭐' : '❌' }}
+                        </div>
+                        <div v-if="isSuccess" class="feedback-text text-success">全部拼對了！<br>你太棒了！</div>
+                        <div v-if="showError" class="feedback-text text-error">不對喔，<br>再試試看！</div>
+                    </div>
+
+                    <button v-if="attempt.length > 0 && !isSuccess" @click="resetTurn" class="btn" style="background: #ef4444; color: white;">清除</button>
                 </div>
             </div>
 
             <div class="symbol-wall">
                 <div class="type-label">聲母</div>
-                <div v-for="s in symbols.initials" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
+                <div v-for="s in symbols.initials" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
                 <div class="type-label">介/韻母</div>
-                <div v-for="s in symbols.finals" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
+                <div v-for="s in symbols.finals" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
                 <div class="type-label">音調</div>
-                <div v-for="s in symbols.tones" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
+                <div v-for="s in symbols.tones" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
             </div>
         </div>
     </div>
@@ -92,6 +114,7 @@ createApp({
             wordIndex: 0,
             attempt: [],
             isSuccess: false,
+            showError: false,
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
                 finals: 'ㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ'.split(''),
@@ -102,36 +125,31 @@ createApp({
     methods: {
         async fetchData() {
             const url = `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
-            try {
-                const response = await fetch(url);
-                const csvText = await response.text();
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        const rawData = results.data;
-                        const grouped = [];
-                        rawData.forEach(item => {
-                            if(!item.group_id) return;
-                            let existing = grouped.find(g => g.group_id === item.group_id);
-                            if (existing) {
-                                existing.words.push({ text: item.test_word, pinyin: item.correct_zhuyin });
-                            } else {
-                                grouped.push({
-                                    group_id: item.group_id,
-                                    story_title: item.story_title,
-                                    scene_img: item.scene_img,
-                                    dialogue: item.dialogue,
-                                    words: [{ text: item.test_word, pinyin: item.correct_zhuyin }]
-                                });
-                            }
-                        });
-                        this.stories = grouped;
-                    }
-                });
-            } catch (error) {
-                console.error("資料讀取失敗:", error);
-            }
+            const response = await fetch(url);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const grouped = [];
+                    results.data.forEach(item => {
+                        if(!item.group_id) return;
+                        let existing = grouped.find(g => g.group_id === item.group_id);
+                        const wordData = { text: item.test_word, pinyin: item.correct_zhuyin };
+                        if (existing) { existing.words.push(wordData); }
+                        else {
+                            grouped.push({
+                                group_id: item.group_id,
+                                story_title: item.story_title,
+                                scene_img: item.scene_img,
+                                dialogue: item.dialogue,
+                                words: [wordData]
+                            });
+                        }
+                    });
+                    this.stories = grouped;
+                }
+            });
         },
         startStory(s) {
             this.currentStory = s;
@@ -141,9 +159,10 @@ createApp({
         resetTurn() {
             this.attempt = [];
             this.isSuccess = false;
+            this.showError = false;
         },
         handlePick(s) {
-            if (this.isSuccess) return;
+            if (this.isSuccess || this.showError) return;
             const currentTarget = this.currentStory.words[this.wordIndex];
             const correctArr = currentTarget.pinyin.split(',');
             const nextIndex = this.attempt.length;
@@ -156,14 +175,15 @@ createApp({
                         setTimeout(() => {
                             this.wordIndex++;
                             this.resetTurn();
-                        }, 1500);
-                    } else {
-                        setTimeout(() => alert("全部拼對了！你太棒了！"), 500);
+                        }, 2500);
                     }
                 }
             } else {
-                alert("位置或符號不正確喔！");
-                this.resetTurn();
+                this.showError = true;
+                setTimeout(() => {
+                    this.showError = false;
+                    this.attempt = [];
+                }, 1500);
             }
         },
         playSound(text) {
@@ -172,9 +192,7 @@ createApp({
             window.speechSynthesis.speak(msg);
         }
     },
-    mounted() {
-        this.fetchData();
-    }
+    mounted() { this.fetchData(); }
 }).mount('#app');
 </script>
 </body>
