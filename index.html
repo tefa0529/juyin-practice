@@ -71,52 +71,65 @@
 
 <script>
 const { createApp } = Vue;
-const sheetID = '1XFFrUXyFBa-84wo6lbFR9Fz1ZEythXm2Z0HIQ2k5X7Y';
+
 createApp({
     data() {
-        return {
-            currentStory: null,
-            currentAttempt: [],
-            isCorrect: false,
-            stories: [{ title: '壽司大餐', id: 1 }], // 預設資料
-            currentScene: { image: 'https://via.placeholder.com/400x250', dialogue: '今天我想吃壽司' },
-            currentWord: { word: '壽', zhuyin: ['ㄕ', 'ㄡ', 'ˋ'] },
-            symbols: {
-                initials: ['ㄅ','ㄆ','ㄇ','ㄈ','ㄉ','ㄊ','ㄋ','ㄌ','ㄍ','ㄎ','ㄏ','ㄐ','ㄑ','ㄒ','ㄓ','ㄔ','ㄕ','ㄖ','ㄗ','ㄘ','ㄙ'],
-                finals: ['ㄚ','ㄛ','ㄜ','ㄝ','ㄞ','ㄟ','ㄠ','ㄡ','ㄢ','ㄣ','ㄤ','ㄥ','ㄦ','ㄧ','ㄨ','ㄩ'],
-                tones: ['ˊ', 'ˇ', 'ˋ', '˙']
-            }
-        }
-    },
+    return {
+        // 確認 ID 是這串：1XFFrUXyFBa-84wo6lbFR9Fz1ZEythXm2Z0HIQ2k5X7Y
+        sheetId: '1XFFrUXyFBa-84wo6lbFR9Fz1ZEythXm2Z0HIQ2k5X7Y', 
+        stories: [],
+        currentStory: null,
+        wordIndex: 0, // 記得加入這個，處理連續測驗
+        attempt: [],
+        isSuccess: false,
+        // ... 其他符號定義不變 ...
+    }
+},
    // ... 前面 data 不變 ...
 methods: {
-    async fetchData() {
-        const url = `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv`;
-        const response = await fetch(url);
-        const data = await response.text();
-        Papa.parse(data, {
-            header: true,
-            complete: (results) => {
-                // 這裡做一個「群組化」處理：把同一個 group_id 的字變成一個陣列
-                const rawData = results.data;
-                const grouped = [];
-                rawData.forEach(item => {
-                    let existing = grouped.find(g => g.group_id === item.group_id);
-                    if (existing) {
-                        existing.words.push({ word: item.test_word, pinyin: item.correct_zhuyin });
-                    } else {
-                        grouped.push({
-                            group_id: item.group_id,
-                            title: item.story_title,
-                            img: item.scene_img,
-                            dialogue: item.dialogue,
-                            words: [{ word: item.test_word, pinyin: item.correct_zhuyin }]
-                        });
-                    }
-                });
-                this.stories = grouped;
-            }
-        });
+async fetchData() {
+        // 使用 CSV 格式抓取比較穩定
+        const url = `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
+        try {
+            const response = await fetch(url);
+            const csvText = await response.text();
+            
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const rawData = results.data;
+                    console.log("原始資料:", rawData); // 你可以在瀏覽器按 F12 檢查
+                    
+                    // 群組化邏輯：把相同 group_id 的字放在一起
+                    const grouped = [];
+                    rawData.forEach(item => {
+                        if(!item.group_id) return; // 跳過空行
+                        let existing = grouped.find(g => g.group_id === item.group_id);
+                        if (existing) {
+                            existing.words.push({ 
+                                text: item.test_word, 
+                                pinyin: item.correct_zhuyin 
+                            });
+                        } else {
+                            grouped.push({
+                                group_id: item.group_id,
+                                story_title: item.story_title,
+                                scene_img: item.scene_img,
+                                dialogue: item.dialogue,
+                                words: [{ 
+                                    text: item.test_word, 
+                                    pinyin: item.correct_zhuyin 
+                                }]
+                            });
+                        }
+                    });
+                    this.stories = grouped;
+                }
+            });
+        } catch (error) {
+            console.error("抓取失敗:", error);
+        }
     },
     startStory(s) {
         this.currentStory = s;
@@ -157,7 +170,7 @@ methods: {
     }
 }
    mounted() {
-  
+    const sheetID = '你的試算表ID';
     const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
     
     fetch(url)
