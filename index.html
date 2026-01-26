@@ -2,23 +2,25 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>注音繪本練習 App</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <style>
-    :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; --dark-green: #166534; --dark-blue: #0369a1; }
-    body { font-family: "Microsoft JhengHei", sans-serif; background: #f8fafc; margin: 0; display: flex; flex-direction: column; align-items: center; }
-    #app { width: 100%; max-width: 1100px; padding: 15px; box-sizing: border-box; }
+    :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; }
+    body { font-family: sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+    #app { width: 100%; max-width: 1100px; }
 
     /* --- 核心結構：手機版預設上下排列 --- */
     .container { 
         display: flex; 
         flex-direction: column; 
-        gap: 20px; 
+        gap: 15px; 
         width: 100%;
     }
-
+    .main-area { width: 100%; box-sizing: border-box; }
+    .story-img { width: 100%; height: auto; border-radius: 15px; border: 4px solid white; }
+    
     /* 繪本場景區域 */
     .scene-container { 
         width: 100%; 
@@ -51,36 +53,41 @@
         min-height: 120px; border: 2px solid var(--dark-green); 
     }
 
-    /* --- 注音符號牆：手機版排在下方，橫向自動換行 --- */
+   /* 注音符號牆：手機版橫向排列 */
     .symbol-wall { 
-        background: white; border-radius: 20px; padding: 15px; border: 1px solid #ddd;
-        display: flex;
-        flex-wrap: wrap; /* 讓注音可以橫向排列並換行 */
+        width: 100%; 
+        background: white; 
+        border: 1px solid #ddd; 
+        border-radius: 20px; 
+        padding: 15px; 
+        box-sizing: border-box;
+        display: flex; /* 改為 flex 讓按鈕橫著排 */
+        flex-wrap: wrap; /* 自動換行 */
         justify-content: center;
-        gap: 5px;
+        gap: 8px;
     }
-    .type-label { width: 100%; font-weight: bold; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; }
+    .type-label { width: 100%; color: #b45309; border-bottom: 2px solid orange; margin-bottom: 5px; }
     
     .symbol-item { 
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 45px; height: 45px; /* 固定大小比較好點擊 */
-        background: #fffbeb; border: 2px solid #f59e0b; 
-        border-radius: 10px; font-size: 1.2rem; cursor: pointer;
+        width: 45px; height: 45px; /* 手機版按鈕大一點好點擊 */
+        display: flex; align-items: center; justify-content: center;
+        background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px;
     }
 
-    /* --- 電腦/平板版面：寬度超過 768px 時恢復左右並排 --- */
+    /* --- 電腦版：螢幕寬度大於 768px 時才變更為左右並排 --- */
     @media (min-width: 768px) {
         .container { 
             display: grid; 
-            grid-template-columns: 2.5fr 1fr; /* 故事區佔大份，符號牆佔右側一小欄 */
-            align-items: start;
+            grid-template-columns: 2.5fr 1fr; /* 故事區 2.5 : 符號牆 1 */
+            gap: 20px;
         }
-        .symbol-wall {
-            display: block; /* 恢復成一塊塊堆疊，適合垂直顯示 */
-            position: sticky; /* 滾動時固定在右側 */
-            top: 20px;
+        .symbol-wall { 
+            display: block; /* 電腦版恢復垂直堆疊 */
+            position: sticky; 
+            top: 20px; 
+            height: fit-content;
         }
-        .symbol-item { margin: 3px; }
+        .symbol-item { margin: 4px; }
         .story-img { max-height: 400px; }
     }
 
@@ -247,5 +254,6 @@ createApp({
 </script>
 </body>
 </html>
+
 
 
