@@ -110,9 +110,19 @@ createApp({
             window.speechSynthesis.speak(msg);
         }
     },
-    mounted() {
-        // 這裡未來加入 Fetch Google Sheets 的程式碼
-    }
+   mounted() {
+    const sheetID = '你的試算表ID';
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+    
+    fetch(url)
+        .then(res => res.text())
+        .then(data => {
+            // 解析 Google Json 格式
+            const r = JSON.parse(data.substring(47, data.length - 2));
+            console.log("抓到的資料：", r.table.rows);
+            // 這裡將 rows 的資料存入 this.stories
+        });
+}
 }).mount('#app');
 </script>
 </body>
