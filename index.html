@@ -10,6 +10,42 @@
         :root { --blue: #e0f2fe; --green: #dcfce7; --gray: #f3f4f6; --dark-green: #166534; --dark-blue: #0369a1; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: #f8fafc; margin: 0; display: flex; flex-direction: column; align-items: center; }
         #app { width: 100%; max-width: 1000px; padding: 20px; }
+
+        .container { 
+    display: flex; 
+    flex-direction: column; /* 手機版改為上下排列，避免左右擠壓 */
+    gap: 15px; 
+    width: 100%;
+    box-sizing: border-box; /* 確保 padding 不會撐破邊界 */
+}
+
+/* 調整主畫面區域 */
+.main-area { 
+    width: 100%; 
+    padding: 10px; 
+    box-sizing: border-box; 
+}
+
+/* 調整符號牆，讓它在手機上不要太擠 */
+.symbol-wall { 
+    width: 100%; 
+    box-sizing: border-box; 
+    display: block; 
+}
+
+/* 確保圖片不會超出容器 */
+.story-img { 
+    max-width: 100%; 
+    height: auto; 
+}
+
+/* 針對寬螢幕（如平板或電腦）才恢復左右並排 */
+@media (min-width: 768px) {
+    .container { 
+        display: grid; 
+        grid-template-columns: 2.5fr 1fr; 
+    }
+}
         
         /* 繪本場景特效 */
         .scene-container { position: relative; width: 100%; height: 350px; background: var(--blue); border-radius: 25px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 8px 16px rgba(0,0,0,0.1); overflow: hidden; }
@@ -193,3 +229,4 @@ createApp({
 </script>
 </body>
 </html>
+
