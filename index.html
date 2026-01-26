@@ -71,7 +71,7 @@
 
 <script>
 const { createApp } = Vue;
-
+const sheetID = '1XFFrUXyFBa-84wo6lbFR9Fz1ZEythXm2Z0HIQ2k5X7Y';
 createApp({
     data() {
         return {
@@ -88,31 +88,77 @@ createApp({
             }
         }
     },
-    methods: {
-        selectStory(s) { this.currentStory = s; },
-        addToAttempt(s) { this.currentAttempt.push(s); },
-        resetAttempt() { this.currentAttempt = []; this.isCorrect = false; },
-        checkAnswer() {
-            const answer = this.currentAttempt.join('');
-            const target = this.currentWord.zhuyin.join('');
-            if (answer === target) {
-                this.isCorrect = true;
-                alert('拼對了！太棒了！');
-            } else {
-                alert('再試試看喔！');
-                this.resetAttempt();
+   // ... 前面 data 不變 ...
+methods: {
+    async fetchData() {
+        const url = `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv`;
+        const response = await fetch(url);
+        const data = await response.text();
+        Papa.parse(data, {
+            header: true,
+            complete: (results) => {
+                // 這裡做一個「群組化」處理：把同一個 group_id 的字變成一個陣列
+                const rawData = results.data;
+                const grouped = [];
+                rawData.forEach(item => {
+                    let existing = grouped.find(g => g.group_id === item.group_id);
+                    if (existing) {
+                        existing.words.push({ word: item.test_word, pinyin: item.correct_zhuyin });
+                    } else {
+                        grouped.push({
+                            group_id: item.group_id,
+                            title: item.story_title,
+                            img: item.scene_img,
+                            dialogue: item.dialogue,
+                            words: [{ word: item.test_word, pinyin: item.correct_zhuyin }]
+                        });
+                    }
+                });
+                this.stories = grouped;
             }
-        },
-        playSound() {
-            // 串接 Google 翻譯 API 快速產生的簡易發音
-            const msg = new SpeechSynthesisUtterance(this.currentWord.word);
-            msg.lang = 'zh-TW';
-            window.speechSynthesis.speak(msg);
-        }
+        });
     },
+    startStory(s) {
+        this.currentStory = s;
+        this.wordIndex = 0; // 從第一個字開始
+        this.resetTurn();
+    },
+    resetTurn() {
+        this.attempt = [];
+        this.isSuccess = false;
+    },
+    handlePick(s) {
+        if (this.isSuccess) return;
+        
+        const currentTarget = this.currentStory.words[this.wordIndex];
+        const correctArr = currentTarget.pinyin.split(',');
+        const nextIndex = this.attempt.length;
+        
+        if (s === correctArr[nextIndex]) {
+            this.attempt.push(s);
+            // 檢查是否拼完目前的字
+            if (this.attempt.length === correctArr.length) {
+                this.isSuccess = true;
+                
+                // 如果還有下一個字，1.5秒後切換
+                if (this.wordIndex < this.currentStory.words.length - 1) {
+                    setTimeout(() => {
+                        this.wordIndex++;
+                        this.resetTurn();
+                    }, 1500);
+                } else {
+                    alert("全部拼對了！你太棒了！");
+                }
+            }
+        } else {
+            // 答錯時的小回饋
+            alert("不對喔，再試試看！");
+        }
+    }
+}
    mounted() {
-    const sheetID = '你的試算表ID';
-    const url = `https://docs.google.com/spreadsheets/d/1XFFrUXyFBa-84wo6lbFR9Fz1ZEythXm2Z0HIQ2k5X7Y/gviz/tq?tqx=out:json`;
+  
+    const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
     
     fetch(url)
         .then(res => res.text())
@@ -127,4 +173,3 @@ createApp({
 </script>
 </body>
 </html>
-
