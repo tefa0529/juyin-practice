@@ -15,11 +15,10 @@
         .main-area { background: var(--blue); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 300px; }
         .story-img { width: 100%; max-height: 250px; object-fit: contain; background: white; border-radius: 10px; border: 3px solid white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         
-        /* 升級版對話框：橫向排列文字與按鈕 */
         .dialog-container { 
             width: 90%; background: white; margin-top: 20px; padding: 15px; border-radius: 15px; 
             display: flex; align-items: center; gap: 15px; border: 3px solid var(--dark-blue); 
-            box-shadow: 0 4px 0 var(--dark-blue);
+            box-shadow: 0 4px 0 var(--dark-blue); min-height: 60px;
         }
         .dialog-text { flex: 1; font-size: 1.3rem; color: #0c4a6e; font-weight: bold; line-height: 1.4; }
 
@@ -35,7 +34,6 @@
         .symbol-item { display: inline-block; padding: 8px 12px; margin: 4px; background: #fef3c7; border: 1px solid #f59e0b; cursor: pointer; border-radius: 8px; font-size: 1.3rem; transition: all 0.1s; user-select: none; }
         .symbol-item:active { transform: scale(0.9); background: #f59e0b; color: white; }
 
-        /* 通用發音按鈕樣式 */
         .btn-audio { 
             cursor: pointer; background: white; border: 2px solid var(--dark-green); 
             border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem;
@@ -43,10 +41,7 @@
             display: flex; align-items: center; justify-content: center;
         }
         .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); background: #f0fdf4; }
-        
-        /* 對話框專用藍色按鈕 */
         .btn-dialog-audio { border-color: var(--dark-blue); color: var(--dark-blue); box-shadow: 0 4px 0 var(--dark-blue); }
-        .btn-dialog-audio:active { box-shadow: 0 0 0 var(--dark-blue); background: #f0f9ff; }
 
         .btn { padding: 10px 20px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
         .star { font-size: 3.5rem; color: #fbbf24; transition: all 0.5s; }
@@ -77,8 +72,8 @@
                 <div class="main-area">
                     <img :src="currentStory.scene_img" class="story-img">
                     <div class="dialog-container">
-                        <div class="dialog-text">{{ currentStory.dialogue }}</div>
-                        <button class="btn-audio btn-dialog-audio" @click="speak(currentStory.dialogue, 0.9)">🔊</button>
+                        <div class="dialog-text">{{ currentStory.words[wordIndex].dialogue }}</div>
+                        <button class="btn-audio btn-dialog-audio" @click="speak(currentStory.words[wordIndex].dialogue, 0.9)">🔊</button>
                     </div>
                 </div>
 
@@ -94,7 +89,7 @@
 
                     <div class="feedback-container">
                         <div v-if="isSuccess || showError" class="star" :class="{'star-up': isSuccess}">
-                            {{ isSuccess ? '⭐' : '❌' }}
+                            {{ isSuccess ? '⭐' : (showError ? '❌' : '') }}
                         </div>
                         <div v-if="isSuccess" class="feedback-text text-success">拼對了！<br>下一個！</div>
                         <div v-if="showError" class="feedback-text text-error">不對喔，<br>再試一次！</div>
@@ -105,11 +100,11 @@
             </div>
 
             <div class="symbol-wall">
-                <div class="type-label">聲母 (橘色)</div>
+                <div class="type-label">聲母</div>
                 <div v-for="s in symbols.initials" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
                 <div class="type-label">介母 / 韻母</div>
                 <div v-for="s in symbols.finals" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
-                <div class="type-label">音調 (藍色)</div>
+                <div class="type-label">音調</div>
                 <div v-for="s in symbols.tones" :key="s" class="symbol-item" @click="handlePick(s)">{{ s }}</div>
             </div>
         </div>
@@ -129,6 +124,8 @@ createApp({
             attempt: [],
             isSuccess: false,
             showError: false,
+            // 預載音效
+            cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
                 finals: 'ㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ'.split(''),
@@ -149,14 +146,18 @@ createApp({
                         results.data.forEach(item => {
                             if(!item.group_id) return;
                             let existing = grouped.find(g => g.group_id === item.group_id);
-                            const wordData = { text: item.test_word, pinyin: item.correct_zhuyin };
+                            // 每個字現在帶有自己的 dialogue
+                            const wordData = { 
+                                text: item.test_word, 
+                                pinyin: item.correct_zhuyin,
+                                dialogue: item.dialogue 
+                            };
                             if (existing) { existing.words.push(wordData); }
                             else {
                                 grouped.push({
                                     group_id: item.group_id,
                                     story_title: item.story_title,
                                     scene_img: item.scene_img,
-                                    dialogue: item.dialogue,
                                     words: [wordData]
                                 });
                             }
@@ -170,8 +171,8 @@ createApp({
             this.currentStory = s;
             this.wordIndex = 0;
             this.resetTurn();
-            // 自動讀一次對話框
-            setTimeout(() => this.speak(s.dialogue, 0.9), 500);
+            // 自動朗讀當前關卡的對話
+            setTimeout(() => this.speak(s.words[0].dialogue, 0.9), 500);
         },
         resetTurn() {
             this.attempt = [];
@@ -188,8 +189,16 @@ createApp({
                 this.attempt.push(s);
                 if (this.attempt.length === correctArr.length) {
                     this.isSuccess = true;
+                    // 播放慶祝音效
+                    this.cheerAudio.play();
+                    
                     if (this.wordIndex < this.currentStory.words.length - 1) {
-                        setTimeout(() => { this.wordIndex++; this.resetTurn(); }, 2500);
+                        setTimeout(() => { 
+                            this.wordIndex++; 
+                            this.resetTurn();
+                            // 切換新字後，自動讀新的對話框內容
+                            this.speak(this.currentStory.words[this.wordIndex].dialogue, 0.9);
+                        }, 2500);
                     }
                 }
             } else {
@@ -198,11 +207,10 @@ createApp({
             }
         },
         speak(text, rate) {
-            window.speechSynthesis.cancel(); // 先停止之前的聲音
+            window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-TW';
-            msg.rate = rate || 0.8; // 速度預設慢一點
-            msg.pitch = 1.1; // 語調高一點，聽起來比較像故事書
+            msg.rate = rate || 0.8;
             window.speechSynthesis.speak(msg);
         }
     },
