@@ -6,6 +6,8 @@
     <title>注音繪本練習 App</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; --dark-green: #166534; }
         
@@ -53,16 +55,36 @@
 
         /* 全破獎勵 */
         .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
-        .big-star { font-size: 8rem; margin-bottom: 20px; }
+       // .big-star { font-size: 8rem; margin-bottom: 20px; }
+               
+        /* 驚喜盒子動畫 */
+        .gift-box { 
+            font-size: 8rem; 
+            margin-bottom: 20px; 
+            cursor: pointer; 
+            animation: giftBounce 0.6s infinite alternate;
+            transition: transform 0.2s;
+        }
+        .gift-box:active { transform: scale(1.2); }
+        @keyframes giftBounce { 
+            from { transform: translateY(0); } 
+            to { transform: translateY(-20px); } 
+        }
+ 
     </style>
 </head>
 <body>
 
 <div id="app">
     <div v-if="isAllFinished" class="complete-overlay">
-        <div class="big-star">🌟</div>
+        //<div class="big-star">🌟</div>
+        <div class="gift-box" @click="fireConfetti">🎁</div>
+        <div v-if="!confettiFired" style="color: orange; font-weight: bold; margin-bottom: 10px;">點一下盒子有驚喜！</div>
+
         <h1>恭喜完成故事！你太厲害了！</h1>
-        <button @click="currentStory = null; isAllFinished = false" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
+        //<button @click="currentStory = null; isAllFinished = false" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
+        <button @click="currentStory = null; isAllFinished = false; confettiFired = false;" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
+
     </div>
 
     <div v-if="!currentStory" class="story-selection">
@@ -133,6 +155,8 @@ createApp({
             isSuccess: false,
             showError: false,
             isAllFinished: false,
+            confettiFired: false, // 追蹤彩帶是否已噴過
+
             cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
@@ -205,6 +229,17 @@ createApp({
                 setTimeout(() => { this.showError = false; this.attempt = []; }, 1200);
             }
         },
+        // 3. 實作彩帶噴發方法
+        fireConfetti() {
+            this.confettiFired = true;
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.6 },
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']
+            });
+        },
+
         speak(text, rate) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
@@ -218,3 +253,4 @@ createApp({
 </script>
 </body>
 </html>
+
