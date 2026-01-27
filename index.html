@@ -77,12 +77,11 @@
 
 <div id="app">
     <div v-if="isAllFinished" class="complete-overlay">
-        /*<div class="big-star">🌟</div>
         <div class="gift-box" @click="fireConfetti">🎁</div>
-        <div v-if="!confettiFired" style="color: orange; font-weight: bold; margin-bottom: 10px;">點一下盒子有驚喜！</div>*/
+        <div v-if="!confettiFired" style="color: orange; font-weight: bold; margin-bottom: 10px;">點一下盒子有驚喜！</div>
 
         <h1>恭喜完成故事！你太厲害了！</h1>
-        /*<button @click="currentStory = null; isAllFinished = false" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>*/
+        
         <button @click="currentStory = null; isAllFinished = false; confettiFired = false;" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
 
     </div>
@@ -253,5 +252,6 @@ createApp({
 </script>
 </body>
 </html>
+
 
 
