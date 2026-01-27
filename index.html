@@ -157,6 +157,9 @@ createApp({
             confettiFired: false, // 追蹤彩帶是否已噴過
 
             cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
+            // 新設：歡呼音效
+            successAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
                 mid:'ㄧㄨㄩ'.split(''),
@@ -200,6 +203,7 @@ createApp({
             this.currentStory = s;
             this.wordIndex = 0;
             this.isAllFinished = false;
+            this.confettiFired = false;
             this.resetTurn();
             setTimeout(() => this.speak(this.currentStory.words[0].dialogue, 0.9), 500);
         },
@@ -230,7 +234,14 @@ createApp({
         },
         /* 3. 實作彩帶噴發方法 */
         fireConfetti() {
+            if (this.confettiFired) return;
             this.confettiFired = true;
+                        
+            // 播放歡呼聲
+            this.successAudio.volume = 0.6;
+            this.successAudio.play();
+
+            // 噴發彩帶
             confetti({
                 particleCount: 200,
                 spread: 90,
@@ -252,6 +263,7 @@ createApp({
 </script>
 </body>
 </html>
+
 
 
 
