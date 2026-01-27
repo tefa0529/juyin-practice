@@ -6,80 +6,91 @@
     <title>注音繪本練習 App</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; --dark-green: #166534; }
+        
+        /* 基礎排版設定 */
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; background: #f8fafc; }
         #app { width: 100%; max-width: 1100px; box-sizing: border-box; }
 
-        /* 遊戲主結構 RWD */
+        /* 通用按鈕樣式 */
+        .btn { padding: 10px 20px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; }
+        .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
+        .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); }
+
+        /* 故事選單 */
+        .story-selection { padding: 30px 10px; text-align: center; }
+        .story-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+        .story-card { cursor: pointer; background: white; padding: 15px; border-radius: 20px; border: 5px solid var(--blue); width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .story-card img { width: 100%; border-radius: 10px; height: 130px; object-fit: cover; }
+
+        /* --- 手機版優先結構 (上下排列) --- */
         .game-content-wrapper { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+
+        .scene-container { width: 100%; background: var(--blue); border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .story-img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 12px; border: 4px solid white; background: white; }
+        
+        .dialog-container { width: 100%; background: rgba(255,255,255,0.9); margin-top: 10px; padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; border: 3px solid var(--dark-blue); box-sizing: border-box; }
+        .dialog-text { flex: 1; font-size: 1.1rem; color: #0c4a6e; font-weight: bold; }
+
+        .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; align-items: center; justify-content: space-around; min-height: 120px; border: 2px solid var(--dark-green); box-sizing: border-box; }
+        .drop-zone { width: 150px; height: 100px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 2.5rem; font-weight: bold; }
+
+        /* 符號牆手機版 (橫向排列) */
+        .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .type-label { width: 100%; font-size: 0.9rem; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
+        .symbol-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 1.2rem; cursor: pointer; user-select: none; }
+        .symbol-item:active { background: #f59e0b; color: white; transform: scale(0.95); }
+
+        /* --- 電腦版 RWD (螢幕寬度 > 768px) --- */
         @media (min-width: 768px) {
             .game-content-wrapper { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; align-items: start; }
+            .symbol-wall { display: block; position: sticky; top: 15px; }
+            .symbol-item { display: inline-flex; margin: 3px; }
+            .story-img { max-height: 400px; }
+            .dialog-text { font-size: 1.3rem; }
         }
 
-        /* 場景與對話 */
-        .scene-container { background: var(--blue); border-radius: 20px; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .story-img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 12px; border: 4px solid white; background: white; }
-        .dialog-container { width: 100%; background: white; margin-top: 10px; padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; border: 3px solid var(--dark-blue); box-sizing: border-box; }
-
-        /* 作答區 */
-        .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; align-items: center; justify-content: space-around; min-height: 140px; border: 2px solid var(--dark-green); }
-        .drop-zone { width: 150px; height: 100px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; }
-
-        /* 驚喜按鈕特效 */
-        .confetti-btn {
-            font-size: 3.5rem; cursor: pointer; border: none; background: none;
-            animation: bounce 0.6s infinite alternate;
-            transition: transform 0.2s;
-        }
-        .confetti-btn:active { transform: scale(1.3); }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
-
-        /* 符號牆 */
-        .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-        @media (min-width: 768px) { .symbol-wall { display: block; position: sticky; top: 15px; } }
-        .symbol-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 1.2rem; cursor: pointer; }
-        
-        .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
-        .type-label { width: 100%; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
+        /* 全破獎勵 */
+        .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
+        .big-star { font-size: 8rem; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div v-if="isAllFinished" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; color:gold;">
-        <div style="font-size:8rem;">👑</div>
-        <h1>恭喜完成故事！</h1>
-        <button @click="currentStory = null; isAllFinished = false" class="btn" style="padding:15px 30px; font-size:1.5rem; background:gold; border-radius:15px; border:none; font-weight:bold; cursor:pointer;">回主選單</button>
+    <div v-if="isAllFinished" class="complete-overlay">
+        <div class="big-star">🌟</div>
+        <h1>恭喜完成故事！你太厲害了！</h1>
+        <button @click="currentStory = null; isAllFinished = false" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
     </div>
 
-    <div v-if="!currentStory" style="text-align:center; padding:40px;">
-        <h1 style="color:var(--dark-blue);">✨ 注音故事繪本 ✨</h1>
-        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px;">
-            <div v-for="s in stories" :key="s.group_id" @click="startStory(s)" style="cursor:pointer; background:white; padding:15px; border-radius:20px; border:5px solid var(--blue); width:180px;">
-                <img :src="s.words[0].img" style="width:100%; border-radius:10px; height:120px; object-fit:cover;">
-                <h3 style="color:var(--dark-blue); margin-top:10px;">{{ s.story_title }}</h3>
+    <div v-if="!currentStory" class="story-selection">
+        <h1 style="color:var(--dark-blue);">✨ 選擇一個注音故事</h1>
+        <div class="story-grid">
+            <div v-for="s in stories" :key="s.group_id" @click="startStory(s)" class="story-card">
+                <img :src="s.words[0].img">
+                <h3 style="margin-top:10px; color:var(--dark-blue);">{{ s.story_title }}</h3>
             </div>
         </div>
     </div>
 
     <div v-else>
-        <button @click="currentStory = null" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:10px; margin-bottom:10px; cursor:pointer;">⬅ 回首頁</button>
+        <button @click="currentStory = null" class="btn" style="background:#64748b; color:white; margin-bottom:15px;">⬅ 回首頁</button>
         
         <div class="game-content-wrapper">
             <div>
                 <div class="scene-container">
                     <img :src="currentStory.words[wordIndex].img" class="story-img" :key="wordIndex">
                     <div class="dialog-container">
-                        <div style="flex:1; font-weight:bold; font-size:1.2rem;">{{ currentStory.words[wordIndex].dialogue }}</div>
-                        <button class="btn-audio" @click="speak(currentStory.words[wordIndex].dialogue, 0.9)">🔊</button>
+                        <div class="dialog-text">{{ currentStory.words[wordIndex].dialogue }}</div>
+                        <button class="btn-audio" style="border-color:var(--dark-blue); color:var(--dark-blue);" @click="speak(currentStory.words[wordIndex].dialogue, 0.9)">🔊</button>
                     </div>
                 </div>
 
                 <div class="answer-area">
-                    <div style="text-align:center;">
-                        <div style="font-size:3rem; font-weight:bold;">{{ currentStory.words[wordIndex].text }}</div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; font-weight: bold; color:var(--dark-green); margin-bottom:5px;">{{ currentStory.words[wordIndex].text }}</div>
                         <button @click="speak(currentStory.words[wordIndex].text, 0.7)" class="btn-audio">🔊</button>
                     </div>
 
@@ -87,11 +98,8 @@
                         <span v-for="s in attempt">{{ s }}</span>
                     </div>
 
-                    <div style="width:120px; text-align:center;">
-                        <div v-if="isSuccess">
-                            <button class="confetti-btn" @click="fireConfetti">🎁</button>
-                            <div style="color:orange; font-weight:bold;">按一下驚喜！</div>
-                        </div>
+                    <div style="width: 100px; text-align: center;">
+                        <div v-if="isSuccess" style="font-size:3rem;">⭐</div>
                         <div v-if="showError" style="font-size:3rem;">❌</div>
                         <button v-if="attempt.length > 0 && !isSuccess" @click="attempt = []" style="background:red; color:white; border:none; border-radius:5px; padding:5px 10px; cursor:pointer;">清除</button>
                     </div>
@@ -101,7 +109,9 @@
             <div class="symbol-wall">
                 <div class="type-label">聲母</div>
                 <div v-for="s in symbols.initials" @click="handlePick(s)" class="symbol-item">{{ s }}</div>
-                <div class="type-label">介/韻母</div>
+                <div class="type-label">介音</div>
+                <div v-for="s in symbols.mid" @click="handlePick(s)" class="symbol-item">{{ s }}</div>
+                <div class="type-label">韻母</div>
                 <div v-for="s in symbols.finals" @click="handlePick(s)" class="symbol-item">{{ s }}</div>
                 <div class="type-label">音調</div>
                 <div v-for="s in symbols.tones" @click="handlePick(s)" class="symbol-item">{{ s }}</div>
@@ -126,7 +136,8 @@ createApp({
             cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
-                finals: 'ㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ'.split(''),
+                mid:'ㄧㄨㄩ'.split(''),
+                finals: 'ㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ'.split(''),
                 tones: ['ˊ', 'ˇ', 'ˋ', '˙']
             }
         }
@@ -134,22 +145,33 @@ createApp({
     methods: {
         async fetchData() {
             const url = `https://docs.google.com/spreadsheets/d/${this.sheetId}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
-            const response = await fetch(url);
-            const csvText = await response.text();
-            Papa.parse(csvText, {
-                header: true, skipEmptyLines: true,
-                complete: (results) => {
-                    const grouped = [];
-                    results.data.forEach(item => {
-                        if(!item.group_id) return;
-                        let existing = grouped.find(g => g.group_id === item.group_id);
-                        const wordData = { text: item.test_word, pinyin: item.correct_zhuyin, dialogue: item.dialogue, img: item.scene_img };
-                        if (existing) { existing.words.push(wordData); }
-                        else { grouped.push({ group_id: item.group_id, story_title: item.story_title, words: [wordData] }); }
-                    });
-                    this.stories = grouped;
-                }
-            });
+            try {
+                const response = await fetch(url);
+                const csvText = await response.text();
+                Papa.parse(csvText, {
+                    header: true, skipEmptyLines: true,
+                    complete: (results) => {
+                        const grouped = [];
+                        results.data.forEach(item => {
+                            if(!item.group_id) return;
+                            let existing = grouped.find(g => g.group_id === item.group_id);
+                            const wordData = { 
+                                text: item.test_word, pinyin: item.correct_zhuyin, 
+                                dialogue: item.dialogue, img: item.scene_img 
+                            };
+                            if (existing) { existing.words.push(wordData); }
+                            else {
+                                grouped.push({
+                                    group_id: item.group_id,
+                                    story_title: item.story_title,
+                                    words: [wordData]
+                                });
+                            }
+                        });
+                        this.stories = grouped;
+                    }
+                });
+            } catch (e) { console.error("CSV載入失敗", e); }
         },
         startStory(s) {
             this.currentStory = s;
@@ -168,31 +190,20 @@ createApp({
                 if (this.attempt.length === correctArr.length) {
                     this.isSuccess = true;
                     this.cheerAudio.play();
+                    setTimeout(() => {
+                        if (this.wordIndex < this.currentStory.words.length - 1) {
+                            this.wordIndex++;
+                            this.resetTurn();
+                            this.speak(this.currentStory.words[this.wordIndex].dialogue, 0.9);
+                        } else {
+                            this.isAllFinished = true;
+                        }
+                    }, 2500);
                 }
             } else {
                 this.showError = true;
                 setTimeout(() => { this.showError = false; this.attempt = []; }, 1200);
             }
-        },
-        fireConfetti() {
-            // 發射彩帶
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']
-            });
-            
-            // 延遲跳轉下一個字
-            setTimeout(() => {
-                if (this.wordIndex < this.currentStory.words.length - 1) {
-                    this.wordIndex++;
-                    this.resetTurn();
-                    this.speak(this.currentStory.words[this.wordIndex].dialogue, 0.9);
-                } else {
-                    this.isAllFinished = true;
-                }
-            }, 2000);
         },
         speak(text, rate) {
             window.speechSynthesis.cancel();
