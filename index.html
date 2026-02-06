@@ -11,22 +11,18 @@
     <style>
         :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; --dark-green: #166534; }
         
-        /* 基礎排版設定 */
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; background: #f8fafc; }
         #app { width: 100%; max-width: 1100px; box-sizing: border-box; }
 
-        /* 通用按鈕樣式 */
         .btn { padding: 10px 20px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; }
         .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
         .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); }
 
-        /* 故事選單 */
         .story-selection { padding: 30px 10px; text-align: center; }
         .story-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
         .story-card { cursor: pointer; background: white; padding: 15px; border-radius: 20px; border: 5px solid var(--blue); width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .story-card img { width: 100%; border-radius: 10px; height: 130px; object-fit: cover; }
 
-        /* --- 手機版優先結構 (上下排列) --- */
         .game-content-wrapper { display: flex; flex-direction: column; gap: 15px; width: 100%; }
 
         .scene-container { width: 100%; background: var(--blue); border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
@@ -38,13 +34,11 @@
         .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; align-items: center; justify-content: space-around; min-height: 120px; border: 2px solid var(--dark-green); box-sizing: border-box; }
         .drop-zone { width: 150px; height: 100px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 2.5rem; font-weight: bold; }
 
-        /* 符號牆手機版 (橫向排列) */
         .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .type-label { width: 100%; font-size: 0.9rem; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
         .symbol-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 1.2rem; cursor: pointer; user-select: none; }
         .symbol-item:active { background: #f59e0b; color: white; transform: scale(0.95); }
 
-        /* --- 電腦版 RWD (螢幕寬度 > 768px) --- */
         @media (min-width: 768px) {
             .game-content-wrapper { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; align-items: start; }
             .symbol-wall { display: block; position: sticky; top: 15px; }
@@ -53,11 +47,8 @@
             .dialog-text { font-size: 1.3rem; }
         }
 
-        /* 全破獎勵 */
         .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
-       /* .big-star { font-size: 8rem; margin-bottom: 20px; }*/
                
-        /* 驚喜盒子動畫 */
         .gift-box { 
             font-size: 8rem; 
             margin-bottom: 20px; 
@@ -70,7 +61,6 @@
             from { transform: translateY(0); } 
             to { transform: translateY(-20px); } 
         }
- 
     </style>
 </head>
 <body>
@@ -79,17 +69,14 @@
     <div v-if="isAllFinished" class="complete-overlay">
         <div class="gift-box" @click="fireConfetti">🎁</div>
         <div v-if="!confettiFired" style="color: orange; font-weight: bold; margin-bottom: 10px;">點一下盒子有驚喜！</div>
-
         <h1>恭喜完成故事！你太厲害了！</h1>
-        
         <button @click="currentStory = null; isAllFinished = false; confettiFired = false;" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
-
     </div>
 
     <div v-if="!currentStory" class="story-selection">
         <h1 style="color:var(--dark-blue);">✨ 選擇一個注音故事</h1>
         <div class="story-grid">
-            <div v-for="s in stories" :key="s.group_id" @click="startStory(s)" class="story-card">
+            <div v-for="s in stories" :key="s.group_id" @click="unlockAndStart(s)" class="story-card">
                 <img :src="s.words[0].img">
                 <h3 style="margin-top:10px; color:var(--dark-blue);">{{ s.story_title }}</h3>
             </div>
@@ -154,10 +141,8 @@ createApp({
             isSuccess: false,
             showError: false,
             isAllFinished: false,
-            confettiFired: false, // 追蹤彩帶是否已噴過
-
+            confettiFired: false,
             cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
-            // 新設：歡呼音效
             successAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
 
             symbols: {
@@ -199,13 +184,23 @@ createApp({
                 });
             } catch (e) { console.error("CSV載入失敗", e); }
         },
+        // 新增：專為 iPad 解鎖語音合成設計的方法
+        unlockAndStart(s) {
+            // iPad 需要在點擊的瞬間執行一次朗讀 (空字串也可以) 來獲得授權
+            const silentMsg = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(silentMsg);
+            
+            // 隨即啟動故事
+            this.startStory(s);
+        },
         startStory(s) {
             this.currentStory = s;
             this.wordIndex = 0;
             this.isAllFinished = false;
             this.confettiFired = false;
             this.resetTurn();
-            setTimeout(() => this.speak(this.currentStory.words[0].dialogue, 0.9), 500);
+            // iPad 不建議使用 setTimeout，直接啟動語音
+            this.speak(this.currentStory.words[0].dialogue, 0.9);
         },
         resetTurn() { this.attempt = []; this.isSuccess = false; this.showError = false; },
         handlePick(s) {
@@ -216,7 +211,10 @@ createApp({
                 this.attempt.push(s);
                 if (this.attempt.length === correctArr.length) {
                     this.isSuccess = true;
-                    this.cheerAudio.play();
+                    // 重置音效指標後播放，提升 iPad 穩定度
+                    this.cheerAudio.currentTime = 0;
+                    this.cheerAudio.play().catch(e => console.log("Audio play blocked"));
+                    
                     setTimeout(() => {
                         if (this.wordIndex < this.currentStory.words.length - 1) {
                             this.wordIndex++;
@@ -232,16 +230,14 @@ createApp({
                 setTimeout(() => { this.showError = false; this.attempt = []; }, 1200);
             }
         },
-        /* 3. 實作彩帶噴發方法 */
         fireConfetti() {
             if (this.confettiFired) return;
             this.confettiFired = true;
                         
-            // 播放歡呼聲
             this.successAudio.volume = 0.6;
-            this.successAudio.play();
+            this.successAudio.currentTime = 0;
+            this.successAudio.play().catch(e => console.log("Final audio blocked"));
 
-            // 噴發彩帶
             confetti({
                 particleCount: 200,
                 spread: 90,
@@ -249,12 +245,15 @@ createApp({
                 colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']
             });
         },
-
         speak(text, rate) {
+            // iPad 必須先 cancel 之前的語音，否則會排隊塞車
             window.speechSynthesis.cancel();
+            
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-TW';
             msg.rate = rate || 0.8;
+            msg.volume = 1.0; // 強制設定音量
+            
             window.speechSynthesis.speak(msg);
         }
     },
@@ -263,7 +262,3 @@ createApp({
 </script>
 </body>
 </html>
-
-
-
-
