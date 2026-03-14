@@ -37,7 +37,7 @@
         .dialog-text { flex: 1; font-size: 1.1rem; color: #0c4a6e; font-weight: bold; }
 
         .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; min-height: 160px; border: 2px solid var(--dark-green); box-sizing: border-box; }
-        .drop-zone { width: 180px; height: 90px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2.5rem; font-weight: bold; }
+        .drop-zone { width: 200px; height: 90px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2.5rem; font-weight: bold; }
 
         .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .type-label { width: 100%; font-size: 0.9rem; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
@@ -190,7 +190,7 @@ createApp({
         handlePick(s) {
             if (this.isSuccess || this.showError) return;
             // 限制最多放 3 個符號 (避免填滿畫面)
-            if (this.attempt.length < 3) {
+            if (this.attempt.length < 4) {
                 this.attempt.push(s);
             }
         },
