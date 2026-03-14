@@ -8,67 +8,80 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-<style>
-    :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; --dark-green: #166534; --orange: #fb923c; }
-    
-    body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; background: #f8fafc; }
-    #app { width: 100%; max-width: 1100px; box-sizing: border-box; }
+    <style>
+        :root { --blue: #e0f2fe; --green: #dcfce7; --dark-blue: #0369a1; --dark-green: #166534; --orange: #fb923c; --gold: #facc15; }
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; background: #f8fafc; }
+        #app { width: 100%; max-width: 1100px; box-sizing: border-box; }
 
-    .btn { padding: 10px 20px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; transition: 0.2s; }
-    .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
-    .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); }
+        /* 頂部狀態欄 */
+        .status-bar { width: 100%; display: flex; justify-content: space-between; background: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; position: sticky; top: 0; z-index: 50; }
+        .stat-item { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 1.2rem; }
+        .coin-icon { color: var(--gold); font-size: 1.5rem; }
+        .score-icon { color: #f43f5e; font-size: 1.5rem; }
 
-    .btn-submit { background: var(--orange); color: white; font-size: 1.2rem; box-shadow: 0 4px 0 #ea580c; margin-top: 10px; }
-    .btn-submit:active { transform: translateY(4px); box-shadow: 0 0 0 #ea580c; }
-    .btn-submit:disabled { background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: not-allowed; }
+        .btn { padding: 10px 20px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; transition: 0.2s; }
+        .btn-audio { cursor: pointer; background: white; border: 3px solid var(--dark-green); border-radius: 50%; width: 50px; height: 50px; font-size: 1.4rem; box-shadow: 0 4px 0 var(--dark-green); display: flex; align-items: center; justify-content: center; }
+        .btn-audio:active { transform: translateY(4px); box-shadow: 0 0 0 var(--dark-green); }
 
-    .story-selection { padding: 30px 10px; text-align: center; }
-    .story-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-    .story-card { cursor: pointer; background: white; padding: 15px; border-radius: 20px; border: 5px solid var(--blue); width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .story-card img { width: 100%; border-radius: 10px; height: 130px; object-fit: cover; }
+        .btn-submit { background: var(--orange); color: white; font-size: 1.2rem; box-shadow: 0 4px 0 #ea580c; margin-top: 10px; width: 120px; }
+        .btn-submit:active { transform: translateY(4px); box-shadow: 0 0 0 #ea580c; }
+        .btn-submit:disabled { background: #cbd5e1; box-shadow: 0 4px 0 #94a3b8; cursor: not-allowed; }
 
-    .game-content-wrapper { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .story-selection { padding: 10px; text-align: center; }
+        .story-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
+        .story-card { cursor: pointer; background: white; padding: 15px; border-radius: 20px; border: 5px solid var(--blue); width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s; }
+        .story-card:hover { transform: scale(1.05); }
+        .story-card img { width: 100%; border-radius: 10px; height: 130px; object-fit: cover; }
 
-    .scene-container { width: 100%; background: var(--blue); border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
-    .story-img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 12px; border: 4px solid white; background: white; }
-    
-    .dialog-container { width: 100%; background: rgba(255,255,255,0.9); margin-top: 10px; padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; border: 3px solid var(--dark-blue); box-sizing: border-box; }
-    .dialog-text { flex: 1; font-size: 1.1rem; color: #0c4a6e; font-weight: bold; }
+        .game-content-wrapper { display: flex; flex-direction: column; gap: 15px; width: 100%; }
 
-    .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; min-height: 160px; border: 2px solid var(--dark-green); box-sizing: border-box; }
-    .drop-zone { width: 220px; height: 90px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2.5rem; font-weight: bold; }
+        .scene-container { width: 100%; background: var(--blue); border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .story-img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 12px; border: 4px solid white; background: white; }
+        
+        .dialog-container { width: 100%; background: rgba(255,255,255,0.9); margin-top: 10px; padding: 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; border: 3px solid var(--dark-blue); box-sizing: border-box; }
+        .dialog-text { flex: 1; font-size: 1.1rem; color: #0c4a6e; font-weight: bold; }
 
-    /* 符號牆：手機版優化 */
-    .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-    .type-label { width: 100%; font-size: 0.9rem; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
-    
-    /* 修正：width 改為 52px，並調整 font-size 讓符號更滿 */
-    .symbol-item { width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 2rem; font-weight: bold; cursor: pointer; user-select: none; line-height: 1; }
-    .symbol-item:active { background: #f59e0b; color: white; transform: scale(0.95); }
+        .answer-area { background: var(--green); border-radius: 20px; padding: 15px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; min-height: 160px; border: 2px solid var(--dark-green); box-sizing: border-box; position: relative; }
+        .drop-zone { width: 220px; height: 90px; background: white; border: 3px dashed #94a3b8; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 2.5rem; font-weight: bold; }
 
-    /* 電腦版 RWD */
-    @media (min-width: 768px) {
-        .game-content-wrapper { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; align-items: start; }
-        .answer-area { flex-direction: row; justify-content: space-around; }
-        .symbol-wall { display: block; position: sticky; top: 15px; }
-        .symbol-item { display: inline-flex; margin: 3px; width: 60px; height: 60px; font-size: 2.4rem; }
-        .story-img { max-height: 400px; }
-        .dialog-text { font-size: 1.3rem; }
-    }
+        /* 符號牆樣式優化 */
+        .symbol-wall { width: 100%; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 15px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .type-label { width: 100%; font-size: 0.9rem; color: #b45309; border-bottom: 2px solid orange; margin: 10px 0 5px 0; font-weight: bold; }
+        .symbol-item { width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; font-size: 2rem; font-weight: bold; cursor: pointer; user-select: none; line-height: 1; }
+        .symbol-item:active { background: #f59e0b; color: white; transform: scale(0.95); }
 
-    .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
-    .gift-box { font-size: 8rem; margin-bottom: 20px; cursor: pointer; animation: giftBounce 0.6s infinite alternate; }
-    @keyframes giftBounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
-</style>
+        @media (min-width: 768px) {
+            .game-content-wrapper { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; align-items: start; }
+            .answer-area { flex-direction: row; justify-content: space-around; }
+            .symbol-wall { display: block; position: sticky; top: 80px; }
+            .symbol-item { display: inline-flex; margin: 3px; width: 60px; height: 60px; font-size: 2.4rem; }
+            .story-img { max-height: 400px; }
+            .dialog-text { font-size: 1.3rem; }
+        }
+
+        .complete-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; text-align: center; }
+        .gift-box { font-size: 8rem; margin-bottom: 20px; cursor: pointer; animation: giftBounce 0.6s infinite alternate; }
+        @keyframes giftBounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+        
+        /* 金幣增加動畫 */
+        .coin-pop { position: absolute; color: var(--gold); font-weight: bold; font-size: 1.5rem; animation: floatUp 1s forwards; pointer-events: none; }
+        @keyframes floatUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-50px); opacity: 0; } }
+    </style>
 </head>
 <body>
 
 <div id="app">
+    <div class="status-bar">
+        <div class="stat-item"><span class="score-icon">🏆</span> 得分: {{ totalScore }}</div>
+        <div class="stat-item"><span class="coin-icon">💰</span> 金幣: {{ totalCoins }}</div>
+        <button v-if="currentStory" @click="currentStory = null" class="btn" style="background:#cbd5e1; padding: 5px 10px;">🏠</button>
+    </div>
+
     <div v-if="isAllFinished" class="complete-overlay">
         <div class="gift-box" @click="fireConfetti">🎁</div>
-        <div v-if="!confettiFired" style="color: orange; font-weight: bold; margin-bottom: 10px;">點一下盒子有驚喜！</div>
-        <h1>恭喜完成故事！你太厲害了！</h1>
-        <button @click="currentStory = null; isAllFinished = false; confettiFired = false;" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
+        <h2 style="color:white;">獲得通關大獎 💰 100!</h2>
+        <h1>恭喜完成故事！</h1>
+        <button @click="closeStory" class="btn" style="font-size: 1.5rem; background: gold;">回主選單</button>
     </div>
 
     <div v-if="!currentStory" class="story-selection">
@@ -79,11 +92,10 @@
                 <h3 style="margin-top:10px; color:var(--dark-blue);">{{ s.story_title }}</h3>
             </div>
         </div>
+        <button @click="resetData" style="margin-top: 50px; background: none; border: none; color: #cbd5e1; font-size: 0.8rem; cursor: pointer;">清除進度重來</button>
     </div>
 
     <div v-else>
-        <button @click="currentStory = null" class="btn" style="background:#64748b; color:white; margin-bottom:15px;">⬅ 回首頁</button>
-        
         <div class="game-content-wrapper">
             <div>
                 <div class="scene-container">
@@ -95,6 +107,8 @@
                 </div>
 
                 <div class="answer-area">
+                    <div v-if="showCoinAnim" class="coin-pop">+10 💰</div>
+                    
                     <div style="text-align: center;">
                         <div style="font-size: 3rem; font-weight: bold; color:var(--dark-green);">{{ currentStory.words[wordIndex].text }}</div>
                         <button @click="speak(currentStory.words[wordIndex].text, 0.7)" class="btn-audio">🔊</button>
@@ -105,6 +119,7 @@
                             <span v-for="s in attempt">{{ s }}</span>
                         </div>
                         <button v-if="!isSuccess" @click="checkAnswer" class="btn btn-submit" :disabled="attempt.length === 0">檢查看看</button>
+                        <div v-else style="color: var(--dark-green); font-weight: bold; margin-top: 10px;">太棒了！</div>
                     </div>
 
                     <div style="width: 100px; text-align: center;">
@@ -143,8 +158,13 @@ createApp({
             showError: false,
             isAllFinished: false,
             confettiFired: false,
+            showCoinAnim: false,
+            // 從儲存空間讀取數據
+            totalCoins: parseInt(localStorage.getItem('zhuyin_coins')) || 0,
+            totalScore: parseInt(localStorage.getItem('zhuyin_score')) || 0,
             cheerAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
             successAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+            coinAudio: new Audio('https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3'),
             symbols: {
                 initials: 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'.split(''),
                 mid:'ㄧㄨㄩ'.split(''),
@@ -152,6 +172,10 @@ createApp({
                 tones: ['ˊ', 'ˇ', 'ˋ', '˙']
             }
         }
+    },
+    watch: {
+        totalCoins(val) { localStorage.setItem('zhuyin_coins', val); },
+        totalScore(val) { localStorage.setItem('zhuyin_score', val); }
     },
     methods: {
         async fetchData() {
@@ -178,9 +202,6 @@ createApp({
         unlockAndStart(s) {
             const silentMsg = new SpeechSynthesisUtterance("");
             window.speechSynthesis.speak(silentMsg);
-            this.startStory(s);
-        },
-        startStory(s) {
             this.currentStory = s;
             this.wordIndex = 0;
             this.isAllFinished = false;
@@ -188,24 +209,27 @@ createApp({
             this.resetTurn();
             this.speak(this.currentStory.words[0].dialogue, 0.9);
         },
-        resetTurn() { this.attempt = []; this.isSuccess = false; this.showError = false; },
+        resetTurn() { this.attempt = []; this.isSuccess = false; this.showError = false; this.showCoinAnim = false; },
         handlePick(s) {
             if (this.isSuccess || this.showError) return;
-            // 限制最多放 3 個符號 (避免填滿畫面)
-            if (this.attempt.length < 4) {
-                this.attempt.push(s);
-            }
+            if (this.attempt.length < 4) { this.attempt.push(s); }
         },
-        // 新增：比對作答區內容
         checkAnswer() {
             const currentTarget = this.currentStory.words[this.wordIndex];
             const correctArr = currentTarget.pinyin.split(',');
             
-            // 將陣列轉為字串比較，確保順序與內容一致
             if (this.attempt.join(',') === correctArr.join(',')) {
                 this.isSuccess = true;
+                
+                // 獎勵機制：得分+1，金幣+10
+                this.totalScore += 1;
+                this.totalCoins += 10;
+                this.showCoinAnim = true;
+                
+                this.coinAudio.currentTime = 0;
+                this.coinAudio.play().catch(e => {});
                 this.cheerAudio.currentTime = 0;
-                this.cheerAudio.play().catch(e => console.log("Audio play blocked"));
+                this.cheerAudio.play().catch(e => {});
                 
                 setTimeout(() => {
                     if (this.wordIndex < this.currentStory.words.length - 1) {
@@ -217,28 +241,32 @@ createApp({
                     }
                 }, 2500);
             } else {
-                // 答錯顯示 ❌
                 this.showError = true;
-                setTimeout(() => { 
-                    this.showError = false; 
-                    this.attempt = []; // 答錯自動清空，讓孩子重新思考
-                }, 1200);
+                setTimeout(() => { this.showError = false; this.attempt = []; }, 1200);
             }
+        },
+        closeStory() {
+            this.totalCoins += 100; // 通關大獎
+            this.currentStory = null;
+            this.isAllFinished = false;
         },
         fireConfetti() {
             if (this.confettiFired) return;
             this.confettiFired = true;
-            this.successAudio.volume = 0.6;
-            this.successAudio.currentTime = 0;
-            this.successAudio.play().catch(e => console.log("Final audio blocked"));
+            this.successAudio.play().catch(e => {});
             confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+        },
+        resetData() {
+            if(confirm("確定要清除所有金幣和得分嗎？")) {
+                this.totalCoins = 0;
+                this.totalScore = 0;
+            }
         },
         speak(text, rate) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-TW';
             msg.rate = rate || 0.8;
-            msg.volume = 1.0;
             window.speechSynthesis.speak(msg);
         }
     },
